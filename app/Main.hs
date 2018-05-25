@@ -64,9 +64,10 @@ eval env (App t u) =
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
 
-checkShadowing :: Expr -> [Identifier]
-checkShadowing expr = nub $ go [] expr
+checkShadowing :: Env -> Expr -> [Identifier]
+checkShadowing env expr = nub $ go startingVars expr
   where
+    startingVars = fmap fst env
     go _ (Lit _) = []
     go vars (Term id) = []
     go vars (App expr1 expr2) = mappend (go vars expr1) (go vars expr2)
@@ -81,15 +82,18 @@ checkShadowing expr = nub $ go [] expr
 
 checkShadowing_test :: IO ()
 checkShadowing_test = do 
-  print $ checkShadowing shadowed_expr        == ["x"]
-        && checkShadowing twice_shadowed_expr == ["x"]
-        && checkShadowing two_shadowed_expr   == ["y", "x"]
-        && checkShadowing non_shadowed_expr   == []
+  print $ checkShadowing [] shadowed_expr        == ["x"]
+        && checkShadowing [] twice_shadowed_expr == ["x"]
+        && checkShadowing [] two_shadowed_expr   == ["y", "x"]
+        && checkShadowing [] non_shadowed_expr   == []
+        && checkShadowing env_with_x expr_with_x == ["x"]
   where
     shadowed_expr = Abs "x" $ Abs "x" $ Term "x"
     twice_shadowed_expr = Abs "x" $ Abs "x" $ Abs "x" $ Term "x"
     two_shadowed_expr = Abs "y" $ Abs "y" $ Abs "x" $ Abs "x" $ Term "x"
     non_shadowed_expr = Abs "y" $ Abs "x" $ Term "x"
+    expr_with_x = Abs "x" $ Term "x"
+    env_with_x = [("x", Value "" [])]
 
 main :: IO ()
 main = do
