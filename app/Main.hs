@@ -63,5 +63,27 @@ eval env (App t u) =
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
 
+checkShadowing :: Expr -> Maybe Identifier
+checkShadowing expr = go [] expr
+  where
+    go _ (Lit _) = Nothing
+    go vars (Term id) = Nothing
+    go vars (App expr1 expr2) = mappend (go vars expr1) (go vars expr2)
+    -- shadowing can only occur in 'Abs' expression, because that's the 
+    -- only place where we create closures
+    go vars (Abs id expr) =
+      if (elem id vars)
+        then Just id
+        else go (id : vars) expr
+
+checkShadowing_test :: IO ()
+checkShadowing_test = do 
+  print $ checkShadowing shadowed_expr
+  print $ checkShadowing non_shadowed_expr
+  where
+    shadowed_expr = Abs "x" $ Abs "x" $ Term "x"
+    non_shadowed_expr = Abs "y" $ Abs "x" $ Term "x"
+
 main :: IO ()
-main = someFunc
+main = do
+  checkShadowing_test
