@@ -60,6 +60,10 @@ eval env (App t u) =
         _                            -> Nothing
 
 
+-- checkShadowing [("_x", Nill)] without_shadow -> []
+without_shadow :: Expr
+without_shadow = Abs "x" $ Abs "_" $ Abs "_" $ Abs "_x" $ Term "x"
+
 -- checkShadowing [] shadow_abs -> ["y","x"]
 -- checkShadowing [("x", Nill)] shadow_abs -> ["x","y","x"]
 shadow_abs :: Expr
@@ -71,6 +75,7 @@ shadow_app = App (App (App (App shadow_abs $ Lit "1") $ Lit "2") $ Lit "3") $ Li
 
 checkShadowing :: Env -> Expr -> [Identifier]
 checkShadowing env (Abs identifier expr) 
+  | identifier !! 0 == '_'       = nested
   | (length $ filter eq env) > 0 = identifier : nested
   | otherwise                    = nested
     where 
