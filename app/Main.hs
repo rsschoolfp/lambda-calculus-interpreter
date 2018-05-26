@@ -9,8 +9,8 @@ type Env = [(Identifier, Value)]
 data Expr
   = Lit String
   | Term Identifier
-  | App Expr Expr
   | Abs Identifier Expr
+  | App Expr Expr
   deriving (Show)
 
 l_id :: Expr
@@ -40,7 +40,8 @@ test_err_1 =
   App (App l_id (Lit "*")) (Lit "!")
 
 data Value
-  = Value String
+  = Nill
+  | Value String
   | Closure Expr Env Identifier
   deriving (Show)
 
@@ -57,6 +58,27 @@ eval env (App t u) =
             Nothing    -> Nothing
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
+
+
+shadow_abs :: Expr
+shadow_abs = Abs "x" (Abs "y" (Abs "x" (Term "x")))
+
+shadow_app :: Expr
+shadow_app = App (App (App shadow_abs (Lit "1")) (Lit "2")) (Lit "3")
+
+checkShadowing :: Env -> Expr -> Maybe Identifier
+checkShadowing env (Term identifier)
+  | (length $ filter eq env) > 1 = Just identifier
+  | otherwise  = Nothing
+    where 
+      eq (key, _) = key == identifier
+checkShadowing env (Abs identifier expr) = checkShadowing ((identifier, Nill) : env) expr
+checkShadowing env (App t u)
+  | et /= Nothing = et
+  | otherwise = checkShadowing env u
+      where
+        et = checkShadowing env t
+checkShadowing _ _ = Nothing
 
 main :: IO ()
 main = someFunc
