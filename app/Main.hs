@@ -40,17 +40,12 @@ test_err_1 =
   App (App l_id (Lit "*")) (Lit "!")
 
 data Value
-  = Value String Env
+  = Value String
   | Closure Expr Env Identifier
   deriving (Show)
 
-  -- | Lit String
-  -- | Term Identifier
-  -- | App Expr Expr
-  -- | Abs Identifier Expr
-
 eval :: Env -> Expr -> Maybe Value
-eval env (Lit string)          = Just $ Value string env
+eval env (Lit string)          = Just $ Value string
 eval env (Term identifier)     = lookup identifier env
 eval env (Abs identifier expr) = Just $ Closure expr env identifier
 eval env (App t u) =
