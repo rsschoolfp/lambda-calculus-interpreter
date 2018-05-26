@@ -59,30 +59,33 @@ eval env (App t u) =
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
 
-
--- checkShadowing [("_x", Nill)] without_shadow -> []
-without_shadow :: Expr
-without_shadow = Abs "x" $ Abs "_" $ Abs "_" $ Abs "_x" $ Term "x"
-
--- checkShadowing [] shadow_abs -> ["y","x"]
--- checkShadowing [("x", Nill)] shadow_abs -> ["x","y","x"]
-shadow_abs :: Expr
-shadow_abs = Abs "x" $ Abs "y" $ Abs "y" $ Abs "x" $ Term "x"
-
--- eval [] shadow_app -> Just (Value "4")
-shadow_app :: Expr
-shadow_app = App (App (App (App shadow_abs $ Lit "1") $ Lit "2") $ Lit "3") $ Lit "4"
-
-checkShadowing :: Env -> Expr -> [Identifier]
-checkShadowing env (Abs identifier expr) 
-  | identifier !! 0 == '_'       = nested
-  | (length $ filter eq env) > 0 = identifier : nested
-  | otherwise                    = nested
+checkShadowing :: [Identifier] -> Expr -> [Identifier]
+checkShadowing args (Abs arg expr) 
+  | arg !! 0 == '_' = nested
+  | elem arg args   = arg : nested
+  | otherwise       = nested
     where 
-      eq (key, _) = key == identifier
-      nested      = checkShadowing ((identifier, Nill) : env) expr
-checkShadowing env (App t u) = concatMap (checkShadowing env) [t, u]
-checkShadowing _ _           = []
+      nested  = checkShadowing (arg : args) expr
+checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
+checkShadowing _ _ = []
+
+testShadowing :: IO ()
+testShadowing =
+  print $ 
+    [
+      checkShadowing ["x"]  lit                   -- []
+    , checkShadowing ["x"]  term                  -- []
+    , checkShadowing ["_x"] abs_with_underscore   -- []
+    , checkShadowing []     abs_twice_shadow      -- ["y", "x"]
+    , checkShadowing ["x"]  abs_twice_shadow      -- ["x", "y", "x"]
+    , checkShadowing []     app_twice_shadow      -- ["y", "x"]
+    ]
+  where
+    lit = Lit "x"
+    term = Term "x"
+    abs_with_underscore = Abs "x" $ Abs "_" $ Abs "_" $ Abs "_x" $ Term "x"
+    abs_twice_shadow = Abs "x" $ Abs "y" $ Abs "y" $ Abs "x" $ Term "x"
+    app_twice_shadow = App (App (App (App abs_twice_shadow $ Lit "1") $ Lit "2") $ Lit "3") $ Lit "4"
 
 main :: IO ()
 main = someFunc
