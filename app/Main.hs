@@ -69,14 +69,23 @@ checkUnused expr = go [] expr
   where
     go unused (Lit _) = unused
     go unused (Term id) = delete id unused
-    go env (App expr_l expr_r) = mappend (env \\ removed) added
-      where
-        left = go env expr_l
-        right = go env expr_r
-        removed = mappend (env \\ left) (env \\ right)
-        added = mappend (left \\ env) (right \\ env)
+    go unused (App expr_l expr_r) = mergeUnused unused (go unused expr_l) (go unused expr_r)
     go unused (Abs "_" expr) = go unused expr
     go unused (Abs id expr) = go (id : unused) expr
+
+mergeUnused :: (Eq a) => [a] -> [a] -> [a] -> [a]
+mergeUnused env left right = (env \\ removed) ++ added
+  where
+    removed = (env \\ left) ++ (env \\ right)
+    added = (left \\ env) ++ (right \\ env)
+  
+mergeUnused_test :: IO ()
+mergeUnused_test = do
+  mergeUnused ["x", "y"] ["x", "z"] ["x", "y"] `shouldBe` ["x", "z"]
+  mergeUnused ["x", "x"] ["x", "z"] ["x", "y"] `shouldBe` ["z", "y"]
+  mergeUnused [] ["x", "z"] ["x", "y"] `shouldBe` ["x", "z", "x", "y"]
+  mergeUnused ["x", "y"] [] ["x", "y"] `shouldBe` []
+  mergeUnused ["x", "y"] ["x"] ["x"] `shouldBe` ["x"]
 
 checkUnused_test :: IO ()
 checkUnused_test = do 
@@ -106,3 +115,4 @@ shouldBe actual expected =
 main :: IO ()
 main = do
   checkUnused_test
+  mergeUnused_test
