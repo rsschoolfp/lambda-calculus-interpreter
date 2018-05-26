@@ -60,25 +60,23 @@ eval env (App t u) =
         _                            -> Nothing
 
 
+-- checkShadowing [] shadow_abs -> ["y","x"]
 shadow_abs :: Expr
-shadow_abs = Abs "x" (Abs "y" (Abs "x" (Term "x")))
+shadow_abs = Abs "x" $ Abs "y" $ Abs "y" $ Abs "x" $ Term "x"
 
+-- eval [] shadow_app -> Just (Value "4")
 shadow_app :: Expr
-shadow_app = App (App (App shadow_abs (Lit "1")) (Lit "2")) (Lit "3")
+shadow_app = App (App (App (App shadow_abs $ Lit "1") $ Lit "2") $ Lit "3") $ Lit "4"
 
-checkShadowing :: Env -> Expr -> Maybe Identifier
-checkShadowing env (Term identifier)
-  | (length $ filter eq env) > 1 = Just identifier
-  | otherwise  = Nothing
+checkShadowing :: Env -> Expr -> [Identifier]
+checkShadowing env (Abs identifier expr) 
+  | (length $ filter eq env) > 0 = [identifier] ++ nested
+  | otherwise                    = nested
     where 
       eq (key, _) = key == identifier
-checkShadowing env (Abs identifier expr) = checkShadowing ((identifier, Nill) : env) expr
-checkShadowing env (App t u)
-  | et /= Nothing = et
-  | otherwise = checkShadowing env u
-      where
-        et = checkShadowing env t
-checkShadowing _ _ = Nothing
+      nested      = checkShadowing ((identifier, Nill) : env) expr
+checkShadowing env (App t u) = concatMap (checkShadowing env) [t, u]
+checkShadowing _ _           = []
 
 main :: IO ()
 main = someFunc
