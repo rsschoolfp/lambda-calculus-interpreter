@@ -4,12 +4,18 @@ import Lib
 
 type Identifier = String
 
+data ErrIdentifier = ErrIdentifier String
+
+instance Show ErrIdentifier where
+  show (ErrIdentifier arg) = "\x1b[31m\"" ++ arg ++ "\"\x1b[0m"
+
 type Env = [(Identifier, Value)]
 
 data Expr
   = Lit String
   | Term Identifier
   | Abs Identifier Expr
+  | ErrAbs ErrIdentifier Expr
   | App Expr Expr
   deriving (Show)
 
@@ -59,10 +65,15 @@ eval env (App t u) =
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
 
-checkShadowing :: [Identifier] -> Expr -> [Identifier]
+data ShadowVar = ShadowVar Identifier Expr
+
+instance Show ShadowVar where
+  show (ShadowVar arg expr) = "\n\t" ++ show arg ++ "\x1b[36m in \x1b[0m{ " ++ show expr ++ " }\n"
+
+checkShadowing :: [Identifier] -> Expr -> [ShadowVar]
 checkShadowing args (Abs arg expr) 
   | arg !! 0 == '_' = nested
-  | elem arg args   = arg : nested
+  | elem arg args   = ShadowVar arg (ErrAbs (ErrIdentifier arg) expr) : nested
   | otherwise       = nested
     where 
       nested  = checkShadowing (arg : args) expr
