@@ -70,7 +70,7 @@ checkShadowing env expr = nub $ go startingVars expr
     startingVars = fmap fst env
     go _ (Lit _) = []
     go vars (Term id) = []
-    go vars (App expr1 expr2) = mappend (go vars expr1) (go vars expr2)
+    go vars (App expr1 expr2) = (go vars expr1) ++ (go vars expr2)
     -- shadowing can only occur in 'Abs' expression, because that's the 
     -- only place where we create closures
     go vars (Abs id expr) =
