@@ -40,8 +40,7 @@ test_err_1 =
   App (App l_id (Lit "*")) (Lit "!")
 
 data Value
-  = Nill
-  | Value String
+  = Value String
   | Closure Expr Env Identifier
   deriving (Show)
 
