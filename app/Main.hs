@@ -1,5 +1,6 @@
 module Main where
 
+import Data.List (nub)
 import Lib
 
 type Identifier = String
@@ -58,5 +59,37 @@ eval env (App t u) =
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
 
+checkShadowing :: Env -> Expr -> [Identifier]
+checkShadowing env expr = nub $ go startingVars expr
+  where
+    startingVars = fmap fst env
+    go _ (Lit _) = []
+    go vars (Term id) = []
+    go vars (App expr1 expr2) = (go vars expr1) ++ (go vars expr2)
+    -- shadowing can only occur in 'Abs' expression, because that's the 
+    -- only place where we create closures
+    go vars (Abs id expr) =
+      if (elem id vars)
+        then id : (go newVars expr)
+        else go newVars expr
+      where
+        newVars = id : vars
+
+checkShadowing_test :: IO ()
+checkShadowing_test = do 
+  print $ checkShadowing [] shadowed_expr        == ["x"]
+        && checkShadowing [] twice_shadowed_expr == ["x"]
+        && checkShadowing [] two_shadowed_expr   == ["y", "x"]
+        && checkShadowing [] non_shadowed_expr   == []
+        && checkShadowing env_with_x expr_with_x == ["x"]
+  where
+    shadowed_expr = Abs "x" $ Abs "x" $ Term "x"
+    twice_shadowed_expr = Abs "x" $ Abs "x" $ Abs "x" $ Term "x"
+    two_shadowed_expr = Abs "y" $ Abs "y" $ Abs "x" $ Abs "x" $ Term "x"
+    non_shadowed_expr = Abs "y" $ Abs "x" $ Term "x"
+    expr_with_x = Abs "x" $ Term "x"
+    env_with_x = [("x", Value "" [])]
+
 main :: IO ()
-main = someFunc
+main = do
+  checkShadowing_test
