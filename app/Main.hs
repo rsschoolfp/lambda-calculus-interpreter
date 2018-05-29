@@ -9,8 +9,8 @@ type Env = [(Identifier, Value)]
 data Expr
   = Lit String
   | Term Identifier
-  | App Expr Expr
   | Abs Identifier Expr
+  | App Expr Expr
   deriving (Show)
 
 l_id :: Expr
@@ -57,6 +57,34 @@ eval env (App t u) =
             Nothing    -> Nothing
             Just value -> eval ((arg, value) : env') expr
         _                            -> Nothing
+
+checkShadowing :: [Identifier] -> Expr -> [Identifier]
+checkShadowing args (Abs arg expr) 
+  | arg !! 0 == '_' = nested
+  | elem arg args   = arg : nested
+  | otherwise       = nested
+    where 
+      nested  = checkShadowing (arg : args) expr
+checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
+checkShadowing _ _ = []
+
+testShadowing :: IO ()
+testShadowing =
+  print $ 
+    [
+      checkShadowing ["x"]  lit                   -- []
+    , checkShadowing ["x"]  term                  -- []
+    , checkShadowing ["_x"] abs_with_underscore   -- []
+    , checkShadowing []     abs_twice_shadow      -- ["y", "x"]
+    , checkShadowing ["x"]  abs_twice_shadow      -- ["x", "y", "x"]
+    , checkShadowing []     app_twice_shadow      -- ["y", "x"]
+    ]
+  where
+    lit = Lit "x"
+    term = Term "x"
+    abs_with_underscore = Abs "x" $ Abs "_" $ Abs "_" $ Abs "_x" $ Term "x"
+    abs_twice_shadow = Abs "x" $ Abs "y" $ Abs "y" $ Abs "x" $ Term "x"
+    app_twice_shadow = App (App (App (App abs_twice_shadow $ Lit "1") $ Lit "2") $ Lit "3") $ Lit "4"
 
 main :: IO ()
 main = someFunc
