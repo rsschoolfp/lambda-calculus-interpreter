@@ -1,2 +1,10 @@
+import           Test.Tasty
+import           Test.Tasty.HUnit
+
+import qualified ShadowingTest
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = defaultMain $ 
+  testGroup "all tests" 
+    [ ShadowingTest.tests
+    ]

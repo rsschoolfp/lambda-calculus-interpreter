@@ -45,4 +45,6 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - tasty
+    - tasty-hunit
     - lambda-calculus-interpreter
