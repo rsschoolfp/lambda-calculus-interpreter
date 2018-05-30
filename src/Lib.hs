@@ -9,41 +9,20 @@ data Expr
   | Term Identifier
   | Abs Identifier Expr
   | App Expr Expr
-  deriving (Show)
-
-l_id :: Expr
-l_id = Abs "x" (Term "x")
-
-l_const :: Expr
-l_const = Abs "x" (Abs "y" (Term "x"))
-
-test_1 :: Expr
-test_1 = App l_id (Lit "wow")
-
-test_2 :: Expr
-test_2 = App (App l_const (Lit "*")) (Lit "!")
-
-test_3 :: Expr
-test_3 =
-  App
-    (App (App l_const l_id) (Lit "!"))
-    (App (App l_const (Lit "*")) l_id)
-
-test_4 :: Expr
-test_4 =
-  App l_id (App l_const (Lit "*"))
-
-test_err_1 :: Expr
-test_err_1 =
-  App (App l_id (Lit "*")) (Lit "!")
+  deriving (Show, Eq)
 
 data Value
   = Value String
   | Closure Expr Env Identifier
   deriving (Show)
 
+instance Eq Value where
+  (==) (Value a) (Value b) = a == b
+  (==) (Closure ex1 env1 id1) (Closure ex2 env2 id2) = ex1 == ex2 && env1 == env2 && id1 == id2
+  (==) _ _ = False
+
 eval :: Env -> Expr -> Maybe Value
-eval env (Lit string)          = Just $ Value string
+eval _   (Lit string)          = Just $ Value string
 eval env (Term identifier)     = lookup identifier env
 eval env (Abs identifier expr) = Just $ Closure expr env identifier
 eval env (App t u) =
@@ -65,6 +44,3 @@ checkShadowing args (Abs arg expr)
       nested  = checkShadowing (arg : args) expr
 checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
 checkShadowing _ _ = []
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
