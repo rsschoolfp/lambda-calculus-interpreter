@@ -14,12 +14,7 @@ data Expr
 data Value
   = Value String
   | Closure Expr Env Identifier
-  deriving (Show)
-
-instance Eq Value where
-  (==) (Value a) (Value b) = a == b
-  (==) (Closure ex1 env1 id1) (Closure ex2 env2 id2) = ex1 == ex2 && env1 == env2 && id1 == id2
-  (==) _ _ = False
+  deriving (Show, Eq)
 
 eval :: Env -> Expr -> Maybe Value
 eval _   (Lit string)          = Just $ Value string
