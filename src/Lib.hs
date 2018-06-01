@@ -1,5 +1,10 @@
 module Lib where
 
+import Prelude (Eq((==)), Show, String, ($))
+import Data.Bool (Bool(False), (&&), otherwise)
+import Data.List (elem, concatMap, (!!), lookup)
+import Data.Maybe (Maybe(Just, Nothing))
+
 type Identifier = String
 
 type Env = [(Identifier, Value)]
@@ -31,11 +36,11 @@ eval env (App t u) =
         _                            -> Nothing
 
 checkShadowing :: [Identifier] -> Expr -> [Identifier]
-checkShadowing args (Abs arg expr) 
+checkShadowing args (Abs arg expr)
   | arg !! 0 == '_' = nested
   | elem arg args   = arg : nested
   | otherwise       = nested
-    where 
+    where
       nested  = checkShadowing (arg : args) expr
 checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
 checkShadowing _ _ = []

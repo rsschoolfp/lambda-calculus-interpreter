@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import Prelude (IO, pure)
 
 main :: IO ()
 main = pure ()
