@@ -1,7 +1,7 @@
 module Lib where
 
-import Prelude (Eq((==)), Show(show), String, ($), (++))
-import Data.Bool (otherwise)
+import Prelude (Eq((==), (/=)), Show(show), String, Bool(True), ($), (++))
+import Data.Bool (otherwise, (&&), (||), not)
 import Data.List (elem, concatMap, (!!), lookup)
 import Data.Maybe (Maybe(Just, Nothing))
 
@@ -59,3 +59,16 @@ checkShadowing args (Abs arg expr)
       nested  = checkShadowing (arg : args) expr
 checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
 checkShadowing _ _ = []
+
+etaReduce :: Expr -> Expr
+etaReduce expr = case expr of
+  (Abs ident (App expr' (Term ident'))) ->
+    if ident == ident' && isNotFreeVar then expr' else expr
+      where isNotFreeVar = not $ isFreeVarOf ident expr'
+  _                                     -> expr
+
+isFreeVarOf :: Identifier -> Expr -> Bool
+isFreeVarOf var (Term t)         = var == t
+isFreeVarOf var (Abs ident body) = var /= ident && isFreeVarOf var body
+isFreeVarOf var (App t u)        = isFreeVarOf var t || isFreeVarOf var u
+isFreeVarOf _ _                  = True
