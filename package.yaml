@@ -24,6 +24,15 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+  - -Wall
+  - -Werror
+  - -Wmissing-import-lists
+  - -Wmissing-exported-signatures
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+  - -Widentities
+  - -Wredundant-constraints
 
 executables:
   lambda-calculus-interpreter-exe:
@@ -33,6 +42,14 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    - -Wmissing-import-lists
+    - -Wmissing-exported-signatures
+    - -Wincomplete-uni-patterns
+    - -Wincomplete-record-updates
+    - -Widentities
+    - -Wredundant-constraints
     dependencies:
     - lambda-calculus-interpreter
 
@@ -44,6 +61,14 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    - -Werror
+    - -Wmissing-import-lists
+    - -Wmissing-exported-signatures
+    - -Wincomplete-uni-patterns
+    - -Wincomplete-record-updates
+    - -Widentities
+    - -Wredundant-constraints
     dependencies:
     - tasty
     - tasty-hunit

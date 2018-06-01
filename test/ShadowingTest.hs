@@ -1,8 +1,8 @@
 module ShadowingTest where
 
-import           Lib              (Expr (..), checkShadowing)
-import           Test.Tasty
-import           Test.Tasty.HUnit
+import           Lib              (Expr (Lit, Term, Abs, App), checkShadowing)
+import           Test.Tasty (TestTree, testGroup)
+import           Test.Tasty.HUnit (testCase, (@?=))
 
 tests :: TestTree
 tests =
