@@ -1,7 +1,7 @@
 module Lib where
 
 import Prelude (Eq((==)), Show, String, ($))
-import Data.Bool (Bool(False), (&&), otherwise)
+import Data.Bool (otherwise)
 import Data.List (elem, concatMap, (!!), lookup)
 import Data.Maybe (Maybe(Just, Nothing))
 
