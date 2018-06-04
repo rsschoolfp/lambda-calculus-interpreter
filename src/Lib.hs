@@ -4,6 +4,7 @@ import Prelude (Eq((==)), Show(show), String, ($), (++))
 import Data.Bool (otherwise)
 import Data.List (elem, concatMap, (!!), lookup)
 import Data.Maybe (Maybe(Just, Nothing))
+import Text.Printf (printf)
 
 type Identifier = String
 
@@ -59,3 +60,10 @@ checkShadowing args (Abs arg expr)
       nested  = checkShadowing (arg : args) expr
 checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
 checkShadowing _ _ = []
+
+compile :: Expr -> String
+compile (Lit string)          = printf "'%s'" string
+compile (Term identifier)     = identifier
+compile (Abs identifier expr) = printf "(%s => %s)" identifier $ compile expr
+compile (App t u)             = printf "%s(%s)" (compile t) (compile u)
+compile _                     = ""
