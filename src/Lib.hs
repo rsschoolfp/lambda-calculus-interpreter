@@ -61,11 +61,10 @@ checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
 checkShadowing _ _ = []
 
 etaReduce :: Expr -> Expr
-etaReduce expr = case expr of
-  (Abs ident (App expr' (Term ident'))) ->
+etaReduce expr@(Abs ident (App expr' (Term ident'))) =
     if ident == ident' && isNotFreeVar then expr' else expr
       where isNotFreeVar = not $ isFreeVarOf ident expr'
-  _                                     -> expr
+etaReduce expr = expr
 
 isFreeVarOf :: Identifier -> Expr -> Bool
 isFreeVarOf var (Term t)         = var == t
