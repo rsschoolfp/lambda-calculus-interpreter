@@ -18,7 +18,7 @@ tests =
     , testCase "Abs twice shadow (one from env)" $
         checkShadowing ["x"] abs_twice_shadow @?= [(ShadowVar "x" lit), (ShadowVar "y" lit), (ShadowVar "x" lit)]
     , testCase "App twice shadow" $
-        checkShadowing [] app_twice_shadow @?= [(ShadowVar "x" lit), (ShadowVar "y" lit)]
+        checkShadowing [] app_twice_shadow @?= [(ShadowVar "y" lit), (ShadowVar "x" lit)]
     ]
   where
     lit = Lit "x"
