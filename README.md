@@ -1,5 +1,7 @@
 # lambda-calculus-interpreter
 
+[![Build Status](https://travis-ci.org/rsschoolfp/lambda-calculus-interpreter.svg?branch=master)](https://travis-ci.org/rsschoolfp/lambda-calculus-interpreter)
+
 ## Testing
 
 To run tests execute

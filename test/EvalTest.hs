@@ -21,15 +21,15 @@ tests =
     , testCase "App Abs const" $
         eval [] (App just_id just_42) @?= Just (Value "42")
     , testCase "Nested Expr" $
-        eval [] app_const @?= Just (Value "777")
+        eval [] app_const @?= Just (Value "const")
     ]
   where
     lit = Lit "42"
     term = Term "x"
     abs' = Abs "x" term
-    abs_id = Abs "x" (Term "x")
+    abs_id = Abs "x" term
     app_id = App abs_id lit
-    abs_const = Abs "x" $ Abs "_" $ Term "x"
-    app_const = App (App abs_const $ Lit "777") lit
-    just_id = (App (App abs_const abs_id) lit)
-    just_42 = (App (App abs_const lit) abs_id)
+    abs_const = Abs "x" $ Abs "_" term
+    app_const = App (App abs_const $ Lit "const") lit
+    just_id = App (App abs_const abs_id) lit
+    just_42 = App (App abs_const lit) abs_id
