@@ -1,6 +1,6 @@
 module CompileTest where
 
-import  Lib                 (Expr (Lit, Term, Abs, App), compile)
+import  Lib                 (Expr (Lit, Term, Abs, App), Term(In), compile)
 import  Test.Tasty          (TestTree, testGroup)
 import  Test.Tasty.HUnit    (testCase, (@?=))
 
@@ -17,9 +17,9 @@ tests =
         compile app_const @?= "(x => (y => x))('1')('0')"
     ]
   where
-    lit = Lit "x"
-    term = Term "x"
-    abs_id = Abs "x" term
-    app_id = App abs_id (Lit "42")
-    abs_const = Abs "x" $ Abs "y" $ Term "x"
-    app_const = App (App abs_const $ Lit "1") $ Lit "0"
+    lit = In $ Lit "x"
+    term = In $ Term "x"
+    abs_id = In $ Abs "x" term
+    app_id = In $ App abs_id (In $ Lit "42")
+    abs_const = In $ Abs "x" $ In $ Abs "y" $ In $ Term "x"
+    app_const = In $ App (In $ App abs_const (In (Lit "1"))) $ In $ Lit "0"
