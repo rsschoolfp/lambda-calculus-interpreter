@@ -33,15 +33,12 @@ eval _   (Lit string)          = Just $ Value string
 eval env (Term identifier)     = lookup identifier env
 eval env (Abs identifier expr) = Just $ Closure expr env identifier
 eval _   (ErrAbs _ _)          = Nothing
-eval env (App t u) =
-  let et = eval env t
-      eu = eval env u
-   in case et of
-        Just (Closure expr env' arg) ->
-          case eu of
-            Nothing    -> Nothing
-            Just value -> eval ((arg, value) : env') expr
-        _                            -> Nothing
+eval env (App t u) = do
+  vt <- eval env t
+  vu <- eval env u
+  case vt of
+    Closure expr env' arg -> eval ((arg, vu) : env') expr
+    _                     -> Nothing
 
 data ShadowVar = ShadowVar Identifier Expr
 
