@@ -1,6 +1,6 @@
 module ShadowingTest where
 
-import  Lib                 (Expr (Lit, Term, Abs, App), ShadowVar (ShadowVar), checkShadowing)
+import  Lib                 (Expr (Lit, Term, Abs, App), ShadowVar (ShadowVar), ErrIdentifier(ErrIdentifier), checkShadowing)
 import  Test.Tasty          (TestTree, testGroup)
 import  Test.Tasty.HUnit    (testCase, (@?=))
 
@@ -14,11 +14,21 @@ tests =
     , testCase "Abs with underscore" $
         checkShadowing ["_x"] abs_with_underscore @?= []
     , testCase "Abs twice shadow" $
-        checkShadowing [] abs_twice_shadow @?= [(ShadowVar "y" lit), (ShadowVar "x" lit)]
+        checkShadowing [] abs_twice_shadow @?=
+          [ (ShadowVar (ErrIdentifier "y") lit)
+          , (ShadowVar (ErrIdentifier "x") lit)
+          ]
     , testCase "Abs twice shadow (one from env)" $
-        checkShadowing ["x"] abs_twice_shadow @?= [(ShadowVar "x" lit), (ShadowVar "y" lit), (ShadowVar "x" lit)]
+        checkShadowing ["x"] abs_twice_shadow @?=
+          [ (ShadowVar (ErrIdentifier "x") lit)
+          , (ShadowVar (ErrIdentifier "y") lit)
+          , (ShadowVar (ErrIdentifier "x") lit)
+          ]
     , testCase "App twice shadow" $
-        checkShadowing [] app_twice_shadow @?= [(ShadowVar "y" lit), (ShadowVar "x" lit)]
+        checkShadowing [] app_twice_shadow @?=
+          [ (ShadowVar (ErrIdentifier "y") lit)
+          , (ShadowVar (ErrIdentifier "x") lit)
+          ]
     ]
   where
     lit = Lit "x"

@@ -8,7 +8,7 @@ import Text.Printf (printf)
 
 type Identifier = String
 
-data ErrIdentifier = ErrIdentifier String deriving (Eq)
+newtype ErrIdentifier = ErrIdentifier String deriving (Eq)
 
 instance Show ErrIdentifier where
   show (ErrIdentifier arg) = "\x1b[31m\"" ++ arg ++ "\"\x1b[0m"
@@ -19,7 +19,6 @@ data Expr
   = Lit String
   | Term Identifier
   | Abs Identifier Expr
-  | ErrAbs ErrIdentifier Expr
   | App Expr Expr
   deriving (Show, Eq)
 
@@ -32,7 +31,6 @@ eval :: Env -> Expr -> Maybe Value
 eval _   (Lit string)          = Just $ Value string
 eval env (Term identifier)     = lookup identifier env
 eval env (Abs identifier expr) = Just $ Closure expr env identifier
-eval _   (ErrAbs _ _)          = Nothing
 eval env (App t u) = do
   vt <- eval env t
   vu <- eval env u
@@ -40,7 +38,7 @@ eval env (App t u) = do
     Closure expr env' arg -> eval ((arg, vu) : env') expr
     _                     -> Nothing
 
-data ShadowVar = ShadowVar Identifier Expr
+data ShadowVar = ShadowVar ErrIdentifier Expr
 
 instance Eq ShadowVar where
   (==) (ShadowVar x _) (ShadowVar y _) = x == y
@@ -51,7 +49,7 @@ instance Show ShadowVar where
 checkShadowing :: [Identifier] -> Expr -> [ShadowVar]
 checkShadowing args (Abs arg expr)
   | arg !! 0 == '_' = nested
-  | elem arg args   = ShadowVar arg (ErrAbs (ErrIdentifier arg) expr) : nested
+  | elem arg args   = ShadowVar (ErrIdentifier arg) expr : nested
   | otherwise       = nested
     where
       nested  = checkShadowing (arg : args) expr
@@ -75,4 +73,3 @@ compile (Lit string)          = printf "'%s'" string
 compile (Term identifier)     = identifier
 compile (Abs identifier expr) = printf "(%s => %s)" identifier $ compile expr
 compile (App t u)             = printf "%s(%s)" (compile t) (compile u)
-compile _                     = ""
