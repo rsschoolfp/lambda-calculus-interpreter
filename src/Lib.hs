@@ -5,6 +5,7 @@ import Data.Bool (otherwise, (&&), (||), not)
 import Data.List (elem, concatMap, (!!), lookup)
 import Data.Maybe (Maybe(Just, Nothing))
 import Text.Printf (printf)
+import Data.Functor ((<$>))
 
 type Identifier = String
 
@@ -14,6 +15,7 @@ instance Show ErrIdentifier where
   show (ErrIdentifier arg) = "\x1b[31m\"" ++ arg ++ "\"\x1b[0m"
 
 type Env = [(Identifier, Value)]
+type EEnv = [(Identifier, Expr)]
 
 data Expr
   = Lit String
@@ -37,6 +39,28 @@ eval env (App t u) = do
   case vt of
     Closure expr env' arg -> eval ((arg, vu) : env') expr
     _                     -> Nothing
+
+betaReduce :: EEnv -> Expr -> Maybe Expr
+betaReduce _   (Lit string) = Just $ Lit string
+betaReduce env (Term identifier) = lookup identifier env
+betaReduce env (Abs identifier expr) = Abs identifier <$> betaReduce env expr
+betaReduce env (App (Abs arg expr) u) = do
+  vu <- betaReduce env u
+  betaReduce ((arg, vu) : env) expr
+
+betaReduce env (App t u@(Abs _ _)) = do
+  vt <- betaReduce env t
+  case vt of
+    Abs arg expr -> betaReduce ((arg, u) : env) expr
+    _                   -> Nothing
+
+betaReduce env (App t u) = do
+  vt <- betaReduce env t
+  vu <- betaReduce env u
+  case vt of
+    Abs arg expr -> betaReduce ((arg, vu) : env) expr
+    _                   -> Nothing
+
 
 data ShadowVar = ShadowVar ErrIdentifier Expr
 
