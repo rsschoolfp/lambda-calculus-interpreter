@@ -6,7 +6,7 @@ import Data.List (elem, concatMap, (!!), lookup)
 import Data.Maybe (Maybe(Just, Nothing))
 import Text.Printf (printf)
 import Data.Functor ((<$>))
-import Control.Applicative (pure)
+import Control.Applicative (pure, (<|>))
 import Control.Monad ((>=>))
 
 type Identifier = String
@@ -44,24 +44,14 @@ eval env (App t u) = do
 
 betaReduce :: EEnv -> Expr -> Maybe Expr
 betaReduce _   (Lit string) = Just $ Lit string
-betaReduce env (Term identifier) = lookup identifier env
+betaReduce env term@(Term identifier) = lookup identifier env <|> Just term
 betaReduce env (Abs identifier expr) = Abs identifier <$> betaReduce env expr
-betaReduce env (App (Abs arg expr) u) = do
-  vu <- betaReduce env u
-  betaReduce ((arg, vu) : env) expr
-
-betaReduce env (App t u@(Abs _ _)) = do
-  vt <- betaReduce env t
-  case vt of
-    Abs arg expr -> betaReduce ((arg, u) : env) expr
-    _                   -> Nothing
-
 betaReduce env (App t u) = do
   vt <- betaReduce env t
   vu <- betaReduce env u
   case vt of
     Abs arg expr -> betaReduce ((arg, vu) : env) expr
-    _                   -> Nothing
+    _            -> Nothing
 
 
 data ShadowVar = ShadowVar ErrIdentifier Expr
