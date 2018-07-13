@@ -21,6 +21,8 @@ etaReduceTests =
         etaReduce not_reducable_2 @?= not_reducable_2
     , testCase "Lit" $
         etaReduce not_reducable_3 @?= not_reducable_3
+    , testCase "" $
+        etaReduce (Abs "x" (App (Abs "z" (App (Term "y") (Term "z"))) (Term "x"))) @?= (Term "y")
     ]
   where
     not_reducable_1 = Abs "x" (App (Term "x") (Term "x"))
