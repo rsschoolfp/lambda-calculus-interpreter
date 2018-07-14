@@ -60,7 +60,7 @@ checkShadowing _ _ = []
 
 etaReduce :: Expr -> Expr
 etaReduce expr@(Abs ident (App expr' (Term ident'))) =
-    if ident == ident' && isNotFreeVar then expr' else expr
+    if ident == ident' && isNotFreeVar then etaReduce expr' else expr
       where isNotFreeVar = not $ isFreeVarOf ident expr'
 etaReduce expr = expr
 
