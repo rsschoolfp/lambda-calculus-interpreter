@@ -4,6 +4,7 @@ import qualified EvalTest
 import qualified ShadowingTest
 import qualified EtaReduceTest
 import qualified CompileTest
+import qualified BetaReduceTest
 
 main :: IO ()
 main = defaultMain $
@@ -12,4 +13,5 @@ main = defaultMain $
       , ShadowingTest.tests
       , EtaReduceTest.tests
       , CompileTest.tests
+      , BetaReduceTest.tests
     ]
