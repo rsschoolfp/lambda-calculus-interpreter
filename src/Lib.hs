@@ -2,7 +2,7 @@ module Lib where
 
 import Prelude (Eq((==), (/=)), Show(show), String, Bool(True), ($), (++), (.))
 import Data.Bool (otherwise, (&&), (||), not)
-import Data.List (elem, concatMap, (!!), lookup)
+import Data.List (elem, concatMap, (!!), lookup, delete, (\\))
 import Data.Maybe (Maybe(Just, Nothing))
 import Text.Printf (printf)
 import Data.Functor ((<$>))
@@ -71,6 +71,22 @@ checkShadowing args (Abs arg expr)
       nested  = checkShadowing (arg : args) expr
 checkShadowing args (App t u) = concatMap (checkShadowing args) [t, u]
 checkShadowing _ _ = []
+
+checkUnused :: Expr -> [Identifier]
+checkUnused = go []
+  where
+    go unused (Lit _) = unused
+    go unused (Term id) = delete id unused
+    go unused (App expr_l expr_r) = 
+      mergeUnused unused (go unused expr_l) (go unused expr_r)
+    go unused (Abs "_" expr) = go unused expr
+    go unused (Abs id expr) = go (id : unused) expr
+
+mergeUnused :: (Eq a) => [a] -> [a] -> [a] -> [a]
+mergeUnused env left right = (env \\ removed) ++ added
+  where
+    removed = (env \\ left) ++ (env \\ right)
+    added = (left \\ env) ++ (right \\ env)
 
 etaReduce :: Expr -> Expr
 etaReduce expr@(Abs ident (App expr' (Term ident'))) =

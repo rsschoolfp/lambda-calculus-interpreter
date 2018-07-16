@@ -5,6 +5,7 @@ import qualified ShadowingTest
 import qualified EtaReduceTest
 import qualified CompileTest
 import qualified BetaReduceTest
+import qualified CheckUnusedTest
 
 main :: IO ()
 main = defaultMain $
@@ -14,4 +15,5 @@ main = defaultMain $
       , EtaReduceTest.tests
       , CompileTest.tests
       , BetaReduceTest.tests
+      , CheckUnusedTest.tests
     ]
