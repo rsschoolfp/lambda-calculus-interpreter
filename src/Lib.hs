@@ -16,8 +16,7 @@ newtype ErrIdentifier = ErrIdentifier String deriving (Eq)
 instance Show ErrIdentifier where
   show (ErrIdentifier arg) = "\x1b[31m\"" ++ arg ++ "\"\x1b[0m"
 
-type Env = [(Identifier, Value)]
-type EEnv = [(Identifier, Expr)]
+type Env a = [(Identifier, a)]
 
 data Expr
   = Lit String
@@ -28,10 +27,10 @@ data Expr
 
 data Value
   = Value String
-  | Closure Expr Env Identifier
+  | Closure Expr (Env Value) Identifier
   deriving (Show, Eq)
 
-eval :: Env -> Expr -> Maybe Value
+eval :: Env Value -> Expr -> Maybe Value
 eval _   (Lit string)          = Just $ Value string
 eval env (Term identifier)     = lookup identifier env
 eval env (Abs identifier expr) = Just $ Closure expr env identifier
@@ -42,7 +41,7 @@ eval env (App t u) = do
     Closure expr env' arg -> eval ((arg, vu) : env') expr
     _                     -> Nothing
 
-betaReduce :: EEnv -> Expr -> Maybe Expr
+betaReduce :: Env Expr -> Expr -> Maybe Expr
 betaReduce _   (Lit string) = Just $ Lit string
 betaReduce env term@(Term identifier) = lookup identifier env <|> Just term
 betaReduce env (Abs identifier expr) = Abs identifier <$> betaReduce env expr
@@ -77,7 +76,7 @@ checkUnused = go []
   where
     go unused (Lit _) = unused
     go unused (Term id) = delete id unused
-    go unused (App expr_l expr_r) = 
+    go unused (App expr_l expr_r) =
       mergeUnused unused (go unused expr_l) (go unused expr_r)
     go unused (Abs "_" expr) = go unused expr
     go unused (Abs id expr) = go (id : unused) expr
