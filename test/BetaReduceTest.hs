@@ -9,15 +9,15 @@ tests :: TestTree
 tests =
   testGroup "betaReduce"
     [ testCase "Application (identity)" $
-        betaReduce [] expr_app @?= Just (Lit "*")
+        betaReduce [] expr_app @?= Right (Lit "*")
     , testCase "Application (const)" $
-        betaReduce [] expr_const @?= Just (Lit "*")
+        betaReduce [] expr_const @?= Right (Lit "*")
     , testCase "Inner expr" $
-        betaReduce [] inner_expr @?= Just (Abs "y" (Lit "*"))
+        betaReduce [] inner_expr @?= Right (Abs "y" (Lit "*"))
     , testCase "App abs argument" $
-        betaReduce [] app_abs_expr @?= Just (Abs "z" (Lit "*"))
+        betaReduce [] app_abs_expr @?= Right (Abs "z" (Lit "*"))
     , testCase "Abstraction applied to abstraction" $
-        betaReduce [] abs_abs_expr @?= Just id'
+        betaReduce [] abs_abs_expr @?= Right id'
     ]
   where
     const' = Abs "x" (Abs "y" (Term "x"))
