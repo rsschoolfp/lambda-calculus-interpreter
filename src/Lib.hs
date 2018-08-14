@@ -3,7 +3,7 @@ module Lib where
 import Prelude (Eq((==), (/=)), Show(show), String, Bool(True), Either(Left, Right), ($), (++))
 import Data.Bool (otherwise, (&&), (||), not)
 import Data.List (elem, concatMap, (!!), lookup, delete, (\\))
-import Data.Maybe (maybe)
+import Data.Maybe (fromMaybe)
 import Text.Printf (printf)
 import Data.Functor ((<$>))
 import Control.Applicative ((<*>))
@@ -33,15 +33,13 @@ data Value
   deriving (Show, Eq)
 
 data Error
-  = UndeclaredVar Identifier
-  | NonFunctionApp Identifier
-  | UnexpectedErr
+  = UndeclaredVar String
+  | NonFunctionApp String
   deriving (Eq)
 
 instance Show Error where
     show (UndeclaredVar v) = "\x1b[31mError: Undeclared identifier \"" ++ v ++ "\"\x1b[0m"
     show (NonFunctionApp v) = "\x1b[31mError: \"" ++ v ++ "\" is not callable\x1b[0m"
-    show (UnexpectedErr) = "Unexpected Error"
 
 eval :: Env Value -> Expr -> Either Error Value
 eval _   (Lit string)          = Right $ Value string
@@ -56,14 +54,14 @@ eval env (App t u) = do
 
 betaReduce :: Env Expr -> Expr -> Either Error Expr
 betaReduce _   (Lit string) = Right $ Lit string
-betaReduce env term@(Term identifier) = maybe (Right term) Right $ lookup identifier env
+betaReduce env term@(Term identifier) = Right $ fromMaybe term $ lookup identifier env
 betaReduce env (Abs identifier expr) = Abs identifier <$> betaReduce env expr
 betaReduce env (App t u) = do
   vt <- betaReduce env t
   vu <- betaReduce env u
   case vt of
     Abs arg expr -> betaReduce ((arg, vu) : env) expr
-    _            -> Left UnexpectedErr
+    _            -> Left $ NonFunctionApp $ show vt
 
 
 data ShadowVar = ShadowVar ErrIdentifier Expr

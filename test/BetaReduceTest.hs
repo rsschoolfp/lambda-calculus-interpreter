@@ -3,7 +3,7 @@ module BetaReduceTest where
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 
-import Lib (Expr(Lit, Term, Abs, App), betaReduce)
+import Lib (Expr(Lit, Term, Abs, App), Error(NonFunctionApp), betaReduce)
 
 tests :: TestTree
 tests =
@@ -18,6 +18,8 @@ tests =
         betaReduce [] app_abs_expr @?= Right (Abs "z" (Lit "*"))
     , testCase "Abstraction applied to abstraction" $
         betaReduce [] abs_abs_expr @?= Right id'
+    , testCase "Non-function application error" $
+        betaReduce [] err_app @?= Left (NonFunctionApp "Lit \"question\"")
     ]
   where
     const' = Abs "x" (Abs "y" (Term "x"))
@@ -28,3 +30,5 @@ tests =
     inner_expr = App const' (Lit "*")
     app_abs_expr = App id' (Abs "z" (App id' (Lit "*")))
     abs_abs_expr = App id' id'
+
+    err_app = App (Lit "question") (Lit "42")
