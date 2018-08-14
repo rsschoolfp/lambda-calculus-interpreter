@@ -3,25 +3,27 @@ module EvalTest where
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 
-import Lib (Expr(Lit, Term, Abs, App), Value(Value, Closure), eval)
+import Lib (Expr(Lit, Term, Abs, App), Value(Value, Closure), Error(UndeclaredVar, NonFunctionApp), eval)
 
 tests :: TestTree
 tests =
   testGroup "eval"
     [ testCase "Literal" $
-        eval [] lit @?= Just (Value "42")
-    , testCase "Empty Term" $
-        eval [] term @?= Nothing
+        eval [] lit @?= Right (Value "42")
     , testCase "Term with Env" $
-        eval [("x", Value "2")] term @?= Just (Value "2")
+        eval [("x", Value "2")] term @?= Right (Value "2")
     , testCase "Abs" $
-        eval [] abs' @?= Just (Closure term [] "x")
+        eval [] abs' @?= Right (Closure term [] "x")
     , testCase "App Abs id" $
-        eval [] app_id @?= Just (Value "42")
+        eval [] app_id @?= Right (Value "42")
     , testCase "App Abs const" $
-        eval [] (App just_id just_42) @?= Just (Value "42")
+        eval [] (App just_id just_42) @?= Right (Value "42")
     , testCase "Nested Expr" $
-        eval [] app_const @?= Just (Value "const")
+        eval [] app_const @?= Right (Value "const")
+    , testCase "Undeclared variable error" $
+        eval [] term @?= Left (UndeclaredVar "x")
+    , testCase "Non-function application error" $
+        eval [] err_app @?= Left (NonFunctionApp "question")
     ]
   where
     lit = Lit "42"
@@ -33,3 +35,4 @@ tests =
     app_const = App (App abs_const $ Lit "const") lit
     just_id = App (App abs_const abs_id) lit
     just_42 = App (App abs_const lit) abs_id
+    err_app = App (Lit "question") (Lit "42")
