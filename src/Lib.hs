@@ -1,13 +1,15 @@
 module Lib where
 
-import Prelude (Eq((==), (/=)), Show(show), String, Bool(True), ($), (++), (.))
+import Prelude (Eq((==), (/=)), Show(show), String, Bool(True), Either(Left, Right), ($), (++))
 import Data.Bool (otherwise, (&&), (||), not)
 import Data.List (elem, concatMap, (!!), lookup, delete, (\\))
-import Data.Maybe (Maybe(Just, Nothing))
+import Data.Maybe (fromMaybe)
 import Text.Printf (printf)
 import Data.Functor ((<$>))
-import Control.Applicative (pure, (<|>))
+import Control.Applicative ((<*>))
 import Control.Monad ((>=>))
+
+import Utils (maybeToEither)
 
 type Identifier = String
 
@@ -30,27 +32,36 @@ data Value
   | Closure Expr (Env Value) Identifier
   deriving (Show, Eq)
 
-eval :: Env Value -> Expr -> Maybe Value
-eval _   (Lit string)          = Just $ Value string
-eval env (Term identifier)     = lookup identifier env
-eval env (Abs identifier expr) = Just $ Closure expr env identifier
+data Error
+  = UndeclaredVar String
+  | NonFunctionApp String
+  deriving (Eq)
+
+instance Show Error where
+    show (UndeclaredVar v) = "\x1b[31mError: Undeclared identifier \"" ++ v ++ "\"\x1b[0m"
+    show (NonFunctionApp v) = "\x1b[31mError: \"" ++ v ++ "\" is not callable\x1b[0m"
+
+eval :: Env Value -> Expr -> Either Error Value
+eval _   (Lit string)          = Right $ Value string
+eval env (Term identifier)     = maybeToEither (UndeclaredVar identifier) $ lookup identifier env
+eval env (Abs identifier expr) = Right $ Closure expr env identifier
 eval env (App t u) = do
   vt <- eval env t
   vu <- eval env u
   case vt of
     Closure expr env' arg -> eval ((arg, vu) : env') expr
-    _                     -> Nothing
+    Value identifier      -> Left $ NonFunctionApp identifier
 
-betaReduce :: Env Expr -> Expr -> Maybe Expr
-betaReduce _   (Lit string) = Just $ Lit string
-betaReduce env term@(Term identifier) = lookup identifier env <|> Just term
+betaReduce :: Env Expr -> Expr -> Either Error Expr
+betaReduce _   (Lit string) = Right $ Lit string
+betaReduce env term@(Term identifier) = Right $ fromMaybe term $ lookup identifier env
 betaReduce env (Abs identifier expr) = Abs identifier <$> betaReduce env expr
 betaReduce env (App t u) = do
   vt <- betaReduce env t
   vu <- betaReduce env u
   case vt of
     Abs arg expr -> betaReduce ((arg, vu) : env) expr
-    _            -> Nothing
+    _            -> Left $ NonFunctionApp $ show vt
 
 
 data ShadowVar = ShadowVar ErrIdentifier Expr
@@ -99,11 +110,12 @@ isFreeVarOf var (Abs ident body) = var /= ident && isFreeVarOf var body
 isFreeVarOf var (App t u)        = isFreeVarOf var t || isFreeVarOf var u
 isFreeVarOf _ _                  = True
 
-compile :: Expr -> String
-compile (Lit string)          = printf "'%s'" string
-compile (Term identifier)     = identifier
-compile (Abs identifier expr) = printf "(%s => %s)" identifier $ compile expr
-compile (App t u)             = printf "%s(%s)" (compile t) (compile u)
+compile :: Expr -> Either Error String
+compile (Lit string)          = Right $ printf "'%s'" string
+compile (Term identifier)     = Right $ identifier
+compile (Abs identifier expr) = printf "(%s => %s)" identifier <$> compile expr
+compile (App (Lit id) _)      = Left $ NonFunctionApp id
+compile (App t u)             = printf "%s(%s)" <$> compile t <*> compile u
 
-compile' :: Expr -> Maybe String
-compile' = betaReduce [] >=> pure . compile
+compile' :: Expr -> Either Error String
+compile' = betaReduce [] >=> compile

@@ -3,21 +3,23 @@ module BetaReduceTest where
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 
-import Lib (Expr(Lit, Term, Abs, App), betaReduce)
+import Lib (Expr(Lit, Term, Abs, App), Error(NonFunctionApp), betaReduce)
 
 tests :: TestTree
 tests =
   testGroup "betaReduce"
     [ testCase "Application (identity)" $
-        betaReduce [] expr_app @?= Just (Lit "*")
+        betaReduce [] expr_app @?= Right (Lit "*")
     , testCase "Application (const)" $
-        betaReduce [] expr_const @?= Just (Lit "*")
+        betaReduce [] expr_const @?= Right (Lit "*")
     , testCase "Inner expr" $
-        betaReduce [] inner_expr @?= Just (Abs "y" (Lit "*"))
+        betaReduce [] inner_expr @?= Right (Abs "y" (Lit "*"))
     , testCase "App abs argument" $
-        betaReduce [] app_abs_expr @?= Just (Abs "z" (Lit "*"))
+        betaReduce [] app_abs_expr @?= Right (Abs "z" (Lit "*"))
     , testCase "Abstraction applied to abstraction" $
-        betaReduce [] abs_abs_expr @?= Just id'
+        betaReduce [] abs_abs_expr @?= Right id'
+    , testCase "Non-function application error" $
+        betaReduce [] err_app @?= Left (NonFunctionApp "Lit \"question\"")
     ]
   where
     const' = Abs "x" (Abs "y" (Term "x"))
@@ -28,3 +30,5 @@ tests =
     inner_expr = App const' (Lit "*")
     app_abs_expr = App id' (Abs "z" (App id' (Lit "*")))
     abs_abs_expr = App id' id'
+
+    err_app = App (Lit "question") (Lit "42")
