@@ -22,9 +22,17 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 
+flags:
+  ci:
+    default: false
+    manual: true
+
+when:
+  - condition: flag(ci)
+    ghc-options: -Werror
+
 ghc-options:
 - -Wall
-- -Werror
 - -Wmissing-import-lists
 - -Wmissing-exported-signatures
 - -Wincomplete-uni-patterns
