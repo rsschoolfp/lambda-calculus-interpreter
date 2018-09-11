@@ -1,6 +1,11 @@
 module Main where
 
-import Prelude (IO, pure)
+import           Prelude          (IO, readFile, fst, ($), putStrLn, show)
+import           Lib              (compile)
+import           Parser           (runParser, expr)
 
 main :: IO ()
-main = pure ()
+main = do
+  line   <- readFile "example.lambda"
+  result <- runParser expr line
+  putStrLn $ show $ compile $ fst result
