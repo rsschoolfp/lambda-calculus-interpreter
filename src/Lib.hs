@@ -25,6 +25,7 @@ data Expr
   | Term Identifier
   | Abs Identifier Expr
   | App Expr Expr
+  | Const Identifier Expr
   deriving (Show, Eq)
 
 data Value
@@ -45,6 +46,7 @@ eval :: Env Value -> Expr -> Either Error Value
 eval _   (Lit string)          = Right $ Value string
 eval env (Term identifier)     = maybeToEither (UndeclaredVar identifier) $ lookup identifier env
 eval env (Abs identifier expr) = Right $ Closure expr env identifier
+eval env (Const identifier expr) = Right $ Closure expr env identifier
 eval env (App t u) = do
   vt <- eval env t
   vu <- eval env u
@@ -56,6 +58,7 @@ betaReduce :: Env Expr -> Expr -> Either Error Expr
 betaReduce _   (Lit string) = Right $ Lit string
 betaReduce env term@(Term identifier) = Right $ fromMaybe term $ lookup identifier env
 betaReduce env (Abs identifier expr) = Abs identifier <$> betaReduce env expr
+betaReduce env (Const identifier expr) = Abs identifier <$> betaReduce env expr
 betaReduce env (App t u) = do
   vt <- betaReduce env t
   vu <- betaReduce env u
@@ -91,6 +94,7 @@ checkUnused = go []
       mergeUnused unused (go unused expr_l) (go unused expr_r)
     go unused (Abs "_" expr) = go unused expr
     go unused (Abs id expr) = go (id : unused) expr
+    go unused (Const id expr) = go (id : unused) expr
 
 mergeUnused :: (Eq a) => [a] -> [a] -> [a] -> [a]
 mergeUnused env left right = (env \\ removed) ++ added
@@ -114,6 +118,7 @@ compile :: Expr -> Either Error String
 compile (Lit string)          = Right $ printf "'%s'" string
 compile (Term identifier)     = Right $ identifier
 compile (Abs identifier expr) = printf "(%s => %s)" identifier <$> compile expr
+compile (Const identifier expr) = printf "%s = %s;\n" identifier <$> compile expr
 compile (App (Lit id) _)      = Left $ NonFunctionApp id
 compile (App t u)             = printf "%s(%s)" <$> compile t <*> compile u
 

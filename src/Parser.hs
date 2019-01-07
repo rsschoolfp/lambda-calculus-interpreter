@@ -8,7 +8,7 @@ import Control.Monad (guard)
 import Control.Arrow (first)
 import Data.Char (isLetter)
 
-import Lib (Expr(Lit, Term, Abs, App), Identifier)
+import Lib (Expr(Lit, Term, Abs, App, Const), Identifier)
 
 data Parser s m a = Parser { runParser :: s -> m (a, s) }
 
@@ -56,10 +56,13 @@ identifier :: (Alternative m, Monad m) => Parser String m Identifier
 identifier = some $ satisfy isLetter
 
 term :: (Alternative m, Monad m) => Parser String m Expr
-term = Term <$> identifier
+term = do
+  many $ char '\n'
+  Term <$> identifier
 
 lambda :: (Alternative m, Monad m) => Parser String m Expr
 lambda = do
+  many $ char '\n'
   char '('
   char 'λ'
   char ' '
@@ -71,6 +74,7 @@ lambda = do
 
 app :: (Alternative m, Monad m) => Parser String m Expr
 app = do
+  many $ char '\n'
   char '('
   t <- expr
   char ' '
@@ -78,8 +82,21 @@ app = do
   char ')'
   pure $ App t u
 
+constant :: (Alternative m, Monad m) => Parser String m Expr
+constant = do
+  many $ char '\n'
+  alias <- many $ satisfy (/= ' ')
+  char ' '
+  char '='
+  char ' '
+  val <- expr
+  char '\n'
+  pure $ Const alias val
+
 expr :: (Alternative m, Monad m) => Parser String m Expr
-expr   = lit
-     <|> term
-     <|> lambda
-     <|> app
+expr
+  =   lit
+  <|> constant
+  <|> term
+  <|> lambda
+  <|> app
