@@ -1,1 +1,0 @@
-((λ x (λ y x)) "Hello, world!")
