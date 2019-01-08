@@ -1,0 +1,3 @@
+const = (λ x (λ y x))
+id = (λ x x)
+main = (((const id) const) (λ y (λ x (λ z y))))

@@ -1,0 +1,6 @@
+zero = (λ f (λ x x))
+one = (λ f (λ x (f x)))
+two = (λ f (λ x (f (f x))))
+three = (λ f (λ x (f ((two f) x))))
+const = (λ x (λ y x))
+main = (three const) "whoa"
