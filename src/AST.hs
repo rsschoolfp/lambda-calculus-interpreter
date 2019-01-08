@@ -11,8 +11,8 @@ import Parser (Parser, char, identifier, expr)
 type Definition = (Identifier, Expr)
 
 data AST = AST
-  { defs :: [Definition]
-  , main :: Expr
+  { defs     :: [Definition]
+  , mainExpr :: Expr
   } deriving (Show)
 
 definition :: (Alternative m, Monad m) => Parser String m Definition
@@ -33,9 +33,9 @@ ast = AST <$> some p <*> mainP
       char '\n'
       pure def
     mainP = do
-      def@(name, ex) <- definition
+      (name, ex) <- definition
       guard $ name == "main"
       pure ex
 
 compileAst :: AST -> Either Error String
-compileAst (AST defs main) = betaReduce defs main >>= compile
+compileAst (AST definitions mainEx) = betaReduce definitions mainEx >>= compile
